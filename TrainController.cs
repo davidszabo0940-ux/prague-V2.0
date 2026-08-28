@@ -1,89 +1,136 @@
-using UnityEngine;
+using System;
 
-public class TrainController : MonoBehaviour
+public class TrainController
 {
-    [Header("Train Settings")]
-    public float maxSpeed = 80f;
-    public float acceleration = 1.2f;
-    public float braking = 2.5f;
+    // ==============================
+    // ZÁKLADNÍ PARAMETRY SOUPRAVY
+    // ==============================
 
-    [Header("Train State")]
-    public float speed = 0f;
-    public bool doorsOpen = false;
-    public bool lightsOn = true;
-    public bool emergencyBrake = false;
+    public double Rychlost { get; private set; }
+    public double MaximalniRychlost { get; } = 80.0;
 
-    private float throttleInput = 0f;
+    public double Zrychleni { get; } = 1.2;
+    public double Brzdeni { get; } = 2.5;
 
-    void Update()
+    // ==============================
+    // STAV SOUPRAVY
+    // ==============================
+
+    public bool DvereOtevrene { get; private set; }
+    public bool SvetlaZapnuta { get; private set; } = true;
+    public bool NouzovaBrzda { get; private set; }
+
+    public bool JePripravenaKJizde
     {
-        HandleInput();
-        UpdateTrainSpeed();
-    }
-
-    void HandleInput()
-    {
-        throttleInput = Input.GetAxis("Vertical");
-
-        if (Input.GetKeyDown(KeyCode.A))
+        get
         {
-            doorsOpen = !doorsOpen;
-        }
-
-        if (Input.GetKeyDown(KeyCode.L))
-        {
-            lightsOn = !lightsOn;
-        }
-
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            emergencyBrake = true;
-        }
-
-        if (Input.GetKeyUp(KeyCode.Space))
-        {
-            emergencyBrake = false;
+            return !DvereOtevrene && !NouzovaBrzda;
         }
     }
 
-    void UpdateTrainSpeed()
-    {
-        if (emergencyBrake)
-        {
-            speed = Mathf.MoveTowards(
-                speed,
-                0f,
-                braking * 2f * Time.deltaTime
-            );
+    // ==============================
+    // OVLÁDÁNÍ
+    // ==============================
 
+    public void Zrychlit()
+    {
+        if (!JePripravenaKJizde)
             return;
-        }
 
-        if (throttleInput > 0f)
-        {
-            speed = Mathf.MoveTowards(
-                speed,
-                maxSpeed,
-                acceleration * throttleInput * Time.deltaTime
-            );
-        }
-        else if (throttleInput < 0f)
-        {
-            speed = Mathf.MoveTowards(
-                speed,
-                0f,
-                braking * Mathf.Abs(throttleInput) * Time.deltaTime
-            );
-        }
+        Rychlost += Zrychleni;
+
+        if (Rychlost > MaximalniRychlost)
+            Rychlost = MaximalniRychlost;
+    }
+
+    public void Brzdit()
+    {
+        Rychlost -= Brzdeni;
+
+        if (Rychlost < 0)
+            Rychlost = 0;
+    }
+
+    public void NouzoveBrzdeni()
+    {
+        NouzovaBrzda = true;
+        Rychlost = 0;
+    }
+
+    public void ZrusitNouzovouBrzdu()
+    {
+        NouzovaBrzda = false;
+    }
+
+    // ==============================
+    // DVEŘE
+    // ==============================
+
+    public void OtevritDvere()
+    {
+        if (Rychlost > 0)
+            return;
+
+        DvereOtevrene = true;
+    }
+
+    public void ZavritDvere()
+    {
+        DvereOtevrene = false;
+    }
+
+    public void PrepnoutDvere()
+    {
+        if (DvereOtevrene)
+            ZavritDvere();
         else
-        {
-            speed = Mathf.MoveTowards(
-                speed,
-                0f,
-                0.15f * Time.deltaTime
-            );
-        }
+            OtevritDvere();
+    }
 
-        speed = Mathf.Clamp(speed, 0f, maxSpeed);
+    // ==============================
+    // SVĚTLA
+    // ==============================
+
+    public void PrepnoutSvetla()
+    {
+        SvetlaZapnuta = !SvetlaZapnuta;
+    }
+
+    // ==============================
+    // KLAKSON
+    // ==============================
+
+    public void Klakson()
+    {
+        Console.WriteLine("HOUKÁNÍ!");
+    }
+
+    // ==============================
+    // INFORMACE O SOUPRAVĚ
+    // ==============================
+
+    public void ZobrazitStav()
+    {
+        Console.WriteLine("--------------------------------");
+        Console.WriteLine("STAV SOUPRAVY");
+        Console.WriteLine("--------------------------------");
+
+        Console.WriteLine(
+            $"Rychlost: {Rychlost:0.0} km/h"
+        );
+
+        Console.WriteLine(
+            $"Dveře: {(DvereOtevrene ? "Otevřené" : "Zavřené")}"
+        );
+
+        Console.WriteLine(
+            $"Světla: {(SvetlaZapnuta ? "Zapnutá" : "Vypnutá")}"
+        );
+
+        Console.WriteLine(
+            $"Nouzová brzda: {(NouzovaBrzda ? "AKTIVNÍ" : "Vypnutá")}"
+        );
+
+        Console.WriteLine("--------------------------------");
     }
 }
