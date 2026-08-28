@@ -11,7 +11,7 @@ class Program
         for (int i = 0; i < 20; i++)
         {
             train.Update(1);
-
+ 
             Console.WriteLine(
                 $"Rychlost: {train.Speed:F2} m/s | " +
                 $"Pozice: {train.Position:F2} m"
